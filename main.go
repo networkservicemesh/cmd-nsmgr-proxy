@@ -22,6 +22,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/networkservicemesh/sdk/pkg/tools/spanhelper"
+
 	"github.com/networkservicemesh/sdk/pkg/networkservice/chains/nsmgrproxy"
 	"github.com/networkservicemesh/sdk/pkg/tools/jaeger"
 	"github.com/networkservicemesh/sdk/pkg/tools/spiffejwt"
@@ -92,14 +94,15 @@ func main() {
 
 	tlsCreds := credentials.NewTLS(tlsconfig.MTLSServerConfig(source, source, tlsconfig.AuthorizeAny()))
 	// Create GRPC Server and register services
-	server := grpc.NewServer(grpc.Creds(tlsCreds))
+	options := append(spanhelper.WithTracing(), grpc.Creds(tlsCreds))
+	server := grpc.NewServer(options...)
 
+	dialOptions := append(spanhelper.WithTracingDial(), grpc.WithBlock(), grpc.WithTransportCredentials(tlsCreds))
 	nsmgrproxy.NewServer(
 		ctx,
 		config.Name,
 		spiffejwt.TokenGeneratorFunc(source, config.MaxTokenLifetime),
-		grpc.WithBlock(),
-		grpc.WithTransportCredentials(tlsCreds),
+		dialOptions...,
 	).Register(server)
 
 	for i := 0; i < len(config.ListenOn); i++ {
