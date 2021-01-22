@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Doc.ai and/or its affiliates.
+// Copyright (c) 2020-2021 Doc.ai and/or its affiliates.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -22,7 +22,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/networkservicemesh/sdk/pkg/tools/spanhelper"
+	"github.com/networkservicemesh/sdk/pkg/tools/opentracing"
 
 	"github.com/networkservicemesh/sdk/pkg/networkservice/chains/nsmgrproxy"
 	"github.com/networkservicemesh/sdk/pkg/tools/jaeger"
@@ -38,7 +38,8 @@ import (
 
 	"github.com/networkservicemesh/sdk/pkg/tools/debug"
 	"github.com/networkservicemesh/sdk/pkg/tools/grpcutils"
-	"github.com/networkservicemesh/sdk/pkg/tools/log"
+	"github.com/networkservicemesh/sdk/pkg/tools/logger"
+	"github.com/networkservicemesh/sdk/pkg/tools/logger/logruslogger"
 	"github.com/networkservicemesh/sdk/pkg/tools/signalctx"
 )
 
@@ -56,12 +57,13 @@ func main() {
 
 	// Setup logging
 	logrus.SetFormatter(&nested.Formatter{})
-	logrus.SetLevel(logrus.TraceLevel)
-	ctx = log.WithField(ctx, "cmd", os.Args[0])
+	ctx, _ = logruslogger.New(
+		logger.WithFields(ctx, map[string]interface{}{"cmd": os.Args[0]}),
+	)
 
 	// Debug self if necessary
 	if err := debug.Self(); err != nil {
-		log.Entry(ctx).Infof("%s", err)
+		logger.Log(ctx).Infof("%s", err)
 	}
 
 	startTime := time.Now()
@@ -71,6 +73,8 @@ func main() {
 	if err := envconfig.Usage("nsmgr-proxy", config); err != nil {
 		logrus.Fatal(err)
 	}
+
+	logger.EnableTracing(true)
 	closeJaeger := jaeger.InitJaeger(config.Name)
 	defer func() {
 		_ = closeJaeger.Close()
@@ -79,7 +83,7 @@ func main() {
 		logrus.Fatalf("error processing config from env: %+v", err)
 	}
 
-	log.Entry(ctx).Infof("Config: %#v", config)
+	logger.Log(ctx).Infof("Config: %#v", config)
 
 	// Get a X509Source
 	source, err := workloadapi.NewX509Source(ctx)
@@ -94,10 +98,10 @@ func main() {
 
 	tlsCreds := credentials.NewTLS(tlsconfig.MTLSServerConfig(source, source, tlsconfig.AuthorizeAny()))
 	// Create GRPC Server and register services
-	options := append(spanhelper.WithTracing(), grpc.Creds(tlsCreds))
+	options := append(opentracing.WithTracing(), grpc.Creds(tlsCreds))
 	server := grpc.NewServer(options...)
 
-	dialOptions := append(spanhelper.WithTracingDial(), grpc.WithBlock(), grpc.WithTransportCredentials(tlsCreds))
+	dialOptions := append(opentracing.WithTracingDial(), grpc.WithBlock(), grpc.WithTransportCredentials(tlsCreds))
 	nsmgrproxy.NewServer(
 		ctx,
 		config.Name,
@@ -110,7 +114,7 @@ func main() {
 		exitOnErr(ctx, cancel, srvErrCh)
 	}
 
-	log.Entry(ctx).Infof("Startup completed in %v", time.Since(startTime))
+	logger.Log(ctx).Infof("Startup completed in %v", time.Since(startTime))
 	<-ctx.Done()
 }
 
@@ -118,13 +122,13 @@ func exitOnErr(ctx context.Context, cancel context.CancelFunc, errCh <-chan erro
 	// If we already have an error, log it and exit
 	select {
 	case err := <-errCh:
-		log.Entry(ctx).Fatal(err)
+		logger.Log(ctx).Fatal(err)
 	default:
 	}
 	// Otherwise wait for an error in the background to log and cancel
 	go func(ctx context.Context, errCh <-chan error) {
 		err := <-errCh
-		log.Entry(ctx).Error(err)
+		logger.Log(ctx).Error(err)
 		cancel()
 	}(ctx, errCh)
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Doc.ai and/or its affiliates.
+// Copyright (c) 2020-2021 Doc.ai and/or its affiliates.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -41,6 +41,7 @@ import (
 
 	main "github.com/networkservicemesh/cmd-nsmgr-proxy"
 
+	"github.com/networkservicemesh/sdk/pkg/tools/logger"
 	"github.com/networkservicemesh/sdk/pkg/tools/spire"
 )
 
@@ -57,7 +58,7 @@ type NetworkServiceManagerProxySuite struct {
 
 func (t *NetworkServiceManagerProxySuite) SetupSuite() {
 	logrus.SetFormatter(&nested.Formatter{})
-	logrus.SetLevel(logrus.TraceLevel)
+	logger.EnableTracing(true)
 	t.ctx, t.cancel = context.WithCancel(context.Background())
 
 	// Run spire
