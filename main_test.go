@@ -41,7 +41,7 @@ import (
 
 	main "github.com/networkservicemesh/cmd-nsmgr-proxy"
 
-	"github.com/networkservicemesh/sdk/pkg/tools/logger"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 	"github.com/networkservicemesh/sdk/pkg/tools/spire"
 )
 
@@ -58,7 +58,7 @@ type NetworkServiceManagerProxySuite struct {
 
 func (t *NetworkServiceManagerProxySuite) SetupSuite() {
 	logrus.SetFormatter(&nested.Formatter{})
-	logger.EnableTracing(true)
+	log.EnableTracing(true)
 	t.ctx, t.cancel = context.WithCancel(context.Background())
 
 	// Run spire

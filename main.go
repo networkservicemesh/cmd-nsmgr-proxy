@@ -38,8 +38,8 @@ import (
 
 	"github.com/networkservicemesh/sdk/pkg/tools/debug"
 	"github.com/networkservicemesh/sdk/pkg/tools/grpcutils"
-	"github.com/networkservicemesh/sdk/pkg/tools/logger"
-	"github.com/networkservicemesh/sdk/pkg/tools/logger/logruslogger"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
+	"github.com/networkservicemesh/sdk/pkg/tools/log/logruslogger"
 	"github.com/networkservicemesh/sdk/pkg/tools/signalctx"
 )
 
@@ -57,13 +57,12 @@ func main() {
 
 	// Setup logging
 	logrus.SetFormatter(&nested.Formatter{})
-	ctx, _ = logruslogger.New(
-		logger.WithFields(ctx, map[string]interface{}{"cmd": os.Args[0]}),
-	)
+	ctx = log.WithFields(ctx, map[string]interface{}{"cmd": os.Args[0]})
+	ctx = log.WithLog(ctx, logruslogger.New(ctx))
 
 	// Debug self if necessary
 	if err := debug.Self(); err != nil {
-		logger.Log(ctx).Infof("%s", err)
+		log.FromContext(ctx).Infof("%s", err)
 	}
 
 	startTime := time.Now()
@@ -74,8 +73,8 @@ func main() {
 		logrus.Fatal(err)
 	}
 
-	logger.EnableTracing(true)
-	closeJaeger := jaeger.InitJaeger(config.Name)
+	log.EnableTracing(true)
+	closeJaeger := jaeger.InitJaeger(ctx, config.Name)
 	defer func() {
 		_ = closeJaeger.Close()
 	}()
@@ -83,7 +82,7 @@ func main() {
 		logrus.Fatalf("error processing config from env: %+v", err)
 	}
 
-	logger.Log(ctx).Infof("Config: %#v", config)
+	log.FromContext(ctx).Infof("Config: %#v", config)
 
 	// Get a X509Source
 	source, err := workloadapi.NewX509Source(ctx)
@@ -114,7 +113,7 @@ func main() {
 		exitOnErr(ctx, cancel, srvErrCh)
 	}
 
-	logger.Log(ctx).Infof("Startup completed in %v", time.Since(startTime))
+	log.FromContext(ctx).Infof("Startup completed in %v", time.Since(startTime))
 	<-ctx.Done()
 }
 
@@ -122,13 +121,13 @@ func exitOnErr(ctx context.Context, cancel context.CancelFunc, errCh <-chan erro
 	// If we already have an error, log it and exit
 	select {
 	case err := <-errCh:
-		logger.Log(ctx).Fatal(err)
+		log.FromContext(ctx).Fatal(err)
 	default:
 	}
 	// Otherwise wait for an error in the background to log and cancel
 	go func(ctx context.Context, errCh <-chan error) {
 		err := <-errCh
-		logger.Log(ctx).Error(err)
+		log.FromContext(ctx).Error(err)
 		cancel()
 	}(ctx, errCh)
 }
