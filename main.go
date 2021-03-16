@@ -25,6 +25,7 @@ import (
 	"github.com/networkservicemesh/sdk/pkg/tools/opentracing"
 
 	"github.com/networkservicemesh/sdk/pkg/networkservice/chains/nsmgrproxy"
+	"github.com/networkservicemesh/sdk/pkg/networkservice/common/authorize"
 	"github.com/networkservicemesh/sdk/pkg/tools/jaeger"
 	"github.com/networkservicemesh/sdk/pkg/tools/spiffejwt"
 
@@ -104,6 +105,7 @@ func main() {
 	nsmgrproxy.NewServer(
 		ctx,
 		config.Name,
+		authorize.NewServer(authorize.Any()),
 		spiffejwt.TokenGeneratorFunc(source, config.MaxTokenLifetime),
 		dialOptions...,
 	).Register(server)
