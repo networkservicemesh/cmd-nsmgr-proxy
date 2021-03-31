@@ -6,10 +6,10 @@ require (
 	github.com/antonfisher/nested-logrus-formatter v1.3.0
 	github.com/edwarnicke/exechelper v1.0.2
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/networkservicemesh/sdk v0.0.0-20210331094157-964332cc797d
+	github.com/networkservicemesh/sdk v0.0.0-20210331144417-68a6beb66557
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spiffe/go-spiffe/v2 v2.0.0-beta.2
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	golang.org/x/exp v0.0.0-20191030013958-a1ab85dbe136 // indirect
 	golang.org/x/net v0.0.0-20201010224723-4f7140c49acb // indirect
 	golang.org/x/tools v0.0.0-20200812195022-5ae4c3c160a0 // indirect
