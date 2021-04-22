@@ -20,6 +20,8 @@ import (
 	"context"
 	"net/url"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/networkservicemesh/sdk/pkg/tools/opentracing"
@@ -40,7 +42,6 @@ import (
 	"github.com/networkservicemesh/sdk/pkg/tools/grpcutils"
 	"github.com/networkservicemesh/sdk/pkg/tools/log"
 	"github.com/networkservicemesh/sdk/pkg/tools/log/logruslogger"
-	"github.com/networkservicemesh/sdk/pkg/tools/signalctx"
 )
 
 // Config is configuration for cmd-nsmgr-proxy
@@ -52,8 +53,15 @@ type Config struct {
 
 func main() {
 	// Setup context to catch signals
-	ctx := signalctx.WithSignals(context.Background())
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := signal.NotifyContext(
+		context.Background(),
+		os.Interrupt,
+		// More Linux signals here
+		syscall.SIGHUP,
+		syscall.SIGTERM,
+		syscall.SIGQUIT,
+	)
+	defer cancel()
 
 	// Setup logging
 	logrus.SetFormatter(&nested.Formatter{})
