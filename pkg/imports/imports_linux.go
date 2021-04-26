@@ -8,7 +8,6 @@ import (
 	_ "github.com/edwarnicke/exechelper"
 	_ "github.com/kelseyhightower/envconfig"
 	_ "github.com/networkservicemesh/sdk/pkg/networkservice/chains/nsmgrproxy"
-	_ "github.com/networkservicemesh/sdk/pkg/networkservice/common/authorize"
 	_ "github.com/networkservicemesh/sdk/pkg/tools/debug"
 	_ "github.com/networkservicemesh/sdk/pkg/tools/grpcutils"
 	_ "github.com/networkservicemesh/sdk/pkg/tools/jaeger"
