@@ -31,6 +31,7 @@ import (
 	"github.com/edwarnicke/grpcfd"
 
 	"github.com/networkservicemesh/sdk/pkg/tools/opentracing"
+	"github.com/networkservicemesh/sdk/pkg/tools/token"
 
 	registryconnect "github.com/networkservicemesh/sdk/pkg/registry/common/connect"
 
@@ -122,7 +123,10 @@ func main() {
 	dialOptions := append(
 		opentracing.WithTracingDial(),
 		grpc.WithBlock(),
-		grpc.WithDefaultCallOptions(grpc.WaitForReady(true)),
+		grpc.WithDefaultCallOptions(
+			grpc.WaitForReady(true),
+			grpc.PerRPCCredentials(token.NewPerRPCCredentials(spiffejwt.TokenGeneratorFunc(source, config.MaxTokenLifetime))),
+		),
 		grpc.WithTransportCredentials(
 			grpcfd.TransportCredentials(
 				credentials.NewTLS(
@@ -130,14 +134,21 @@ func main() {
 				),
 			),
 		),
+		grpcfd.WithChainStreamInterceptor(),
+		grpcfd.WithChainUnaryInterceptor(),
 	)
+
+	listenURL := getPublicURL(defaultURL(config))
+
+	log.FromContext(ctx).Infof("Listening url: %v", listenURL)
+
 	nsmgrproxy.NewServer(
 		ctx,
-		config.RegistryProxyURL,
 		config.RegistryURL,
+		config.RegistryProxyURL,
 		spiffejwt.TokenGeneratorFunc(source, config.MaxTokenLifetime),
 		nsmgrproxy.WithName(config.Name),
-		nsmgrproxy.WithListenOn(getPublicURL(defaultURL(config))),
+		nsmgrproxy.WithListenOn(listenURL),
 		nsmgrproxy.WithRegistryConnectOptions(registryconnect.WithDialOptions(dialOptions...)),
 		nsmgrproxy.WithConnectOptions(connect.WithDialOptions(dialOptions...)),
 		nsmgrproxy.WithMapIPFilePath(config.MapIPFilePath),
