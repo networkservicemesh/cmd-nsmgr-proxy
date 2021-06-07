@@ -23,4 +23,4 @@ CMD dlv -l :40000 --headless=true --api-version=2 test -test.v ./...
 
 FROM alpine as runtime
 COPY --from=build /bin/nsmgr-proxy /bin/nsmgr-proxy
-CMD /bin/nsmgr-proxy
+ENTRYPOINT ["/bin/nsmgr-proxy"]
