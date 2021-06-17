@@ -20,8 +20,6 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"net"
 	"net/url"
 	"os"
 	"os/signal"
@@ -62,6 +60,7 @@ type Config struct {
 	MapIPFilePath    string        `default:"map-ip.yaml" desc:"Path to file that contains map of internal to external IPs" split_words:"true"`
 	RegistryProxyURL *url.URL      `desc:"URL to registry proxy. All incoming interdomain registry requests will be proxying by the URL" split_words:"true"`
 	RegistryURL      *url.URL      `desc:"URL to registry. All incoming local registry requests will be proxying by the URL" split_words:"true"`
+	IP               string        `desc:"IP of nsmgr-proxy. The value is using in the case of registering in floating registry." split_words:"true"`
 }
 
 func main() {
@@ -103,6 +102,10 @@ func main() {
 		logrus.Fatalf("error processing config from env: %+v", err)
 	}
 
+	if len(config.ListenOn) == 0 {
+		log.FromContext(ctx).Fatal("config.ListenOn is empty")
+	}
+
 	log.FromContext(ctx).Infof("Config: %#v", config)
 
 	// Get a X509Source
@@ -138,17 +141,13 @@ func main() {
 		grpcfd.WithChainUnaryInterceptor(),
 	)
 
-	listenURL := getPublicURL(defaultURL(config))
-
-	log.FromContext(ctx).Infof("Listening url: %v", listenURL)
-
 	nsmgrproxy.NewServer(
 		ctx,
 		config.RegistryURL,
 		config.RegistryProxyURL,
 		spiffejwt.TokenGeneratorFunc(source, config.MaxTokenLifetime),
 		nsmgrproxy.WithName(config.Name),
-		nsmgrproxy.WithListenOn(listenURL),
+		nsmgrproxy.WithListenOn(must(url.Parse(config.IP))),
 		nsmgrproxy.WithRegistryConnectOptions(registryconnect.WithDialOptions(dialOptions...)),
 		nsmgrproxy.WithConnectOptions(connect.WithDialOptions(dialOptions...)),
 		nsmgrproxy.WithMapIPFilePath(config.MapIPFilePath),
@@ -161,6 +160,13 @@ func main() {
 
 	log.FromContext(ctx).Infof("Startup completed in %v", time.Since(startTime))
 	<-ctx.Done()
+}
+
+func must(u *url.URL, err error) *url.URL {
+	if err != nil {
+		logrus.Fatal(err.Error())
+	}
+	return u
 }
 
 func exitOnErr(ctx context.Context, cancel context.CancelFunc, errCh <-chan error) {
@@ -176,34 +182,4 @@ func exitOnErr(ctx context.Context, cancel context.CancelFunc, errCh <-chan erro
 		log.FromContext(ctx).Error(err)
 		cancel()
 	}(ctx, errCh)
-}
-
-func defaultURL(c *Config) *url.URL {
-	for i := 0; i < len(c.ListenOn); i++ {
-		u := &c.ListenOn[i]
-		if u.Scheme == "tcp" {
-			return u
-		}
-	}
-	return &c.ListenOn[0]
-}
-
-func getPublicURL(u *url.URL) *url.URL {
-	if u.Port() == "" || len(u.Host) != len(":")+len(u.Port()) {
-		return u
-	}
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		logrus.Warn(err.Error())
-		return u
-	}
-	for _, a := range addrs {
-		if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				r, _ := url.Parse(fmt.Sprintf("tcp://%v:%v", ipnet.IP.String(), u.Port()))
-				return r
-			}
-		}
-	}
-	return u
 }
