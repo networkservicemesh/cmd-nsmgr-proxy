@@ -30,7 +30,6 @@ import (
 	_ "google.golang.org/grpc"
 	_ "google.golang.org/grpc/credentials"
 	_ "google.golang.org/grpc/health/grpc_health_v1"
-	_ "net"
 	_ "net/url"
 	_ "os"
 	_ "os/signal"
