@@ -31,6 +31,7 @@ import (
 	"github.com/edwarnicke/grpcfd"
 
 	"github.com/networkservicemesh/sdk/pkg/tools/opentracing"
+	"github.com/networkservicemesh/sdk/pkg/tools/resetting"
 	"github.com/networkservicemesh/sdk/pkg/tools/token"
 
 	registryconnect "github.com/networkservicemesh/sdk/pkg/registry/common/connect"
@@ -128,11 +129,13 @@ func main() {
 			grpc.PerRPCCredentials(token.NewPerRPCCredentials(spiffejwt.TokenGeneratorFunc(source, config.MaxTokenLifetime))),
 		),
 		grpc.WithTransportCredentials(
-			grpcfd.TransportCredentials(
-				credentials.NewTLS(
-					tlsconfig.MTLSClientConfig(source, source, tlsconfig.AuthorizeAny()),
+			resetting.NewCredentials(
+				grpcfd.TransportCredentials(
+					credentials.NewTLS(
+						tlsconfig.MTLSClientConfig(source, source, tlsconfig.AuthorizeAny()),
+					),
 				),
-			),
+				source.Updated()),
 		),
 		grpcfd.WithChainStreamInterceptor(),
 		grpcfd.WithChainUnaryInterceptor(),
