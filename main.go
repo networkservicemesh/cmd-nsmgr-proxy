@@ -59,7 +59,7 @@ import (
 type Config struct {
 	ListenOn         []url.URL     `default:"unix:///listen.on.socket" desc:"url to listen on." split_words:"true"`
 	Name             string        `default:"nsmgr-proxy" desc:"Name of Network service manager proxy"`
-	MaxTokenLifetime time.Duration `default:"24h" desc:"maximum lifetime of tokens" split_words:"true"`
+	MaxTokenLifetime time.Duration `default:"10m" desc:"maximum lifetime of tokens" split_words:"true"`
 	MapIPFilePath    string        `default:"map-ip.yaml" desc:"Path to file that contains map of internal to external IPs" split_words:"true"`
 	RegistryProxyURL *url.URL      `desc:"URL to registry proxy. All incoming interdomain registry requests will be proxying by the URL" split_words:"true"`
 	RegistryURL      *url.URL      `desc:"URL to registry. All incoming local registry requests will be proxying by the URL" split_words:"true"`
