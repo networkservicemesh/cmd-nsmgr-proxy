@@ -62,6 +62,7 @@ type Config struct {
 	MapIPFilePath    string        `default:"map-ip.yaml" desc:"Path to file that contains map of internal to external IPs" split_words:"true"`
 	RegistryProxyURL *url.URL      `desc:"URL to registry proxy. All incoming interdomain registry requests will be proxying by the URL" split_words:"true"`
 	RegistryURL      *url.URL      `desc:"URL to registry. All incoming local registry requests will be proxying by the URL" split_words:"true"`
+	LogLevel         string        `default:"INFO" desc:"Log level" split_words:"true"`
 }
 
 func main() {
@@ -102,6 +103,7 @@ func main() {
 	if err := envconfig.Process("nsm", config); err != nil {
 		logrus.Fatalf("error processing config from env: %+v", err)
 	}
+	setLogLevel(config.LogLevel)
 
 	log.FromContext(ctx).Infof("Config: %#v", config)
 
@@ -206,4 +208,12 @@ func getPublicURL(u *url.URL) *url.URL {
 		}
 	}
 	return u
+}
+
+func setLogLevel(level string) {
+	l, err := logrus.ParseLevel(level)
+	if err != nil {
+		logrus.Fatalf("invalid log level %s", level)
+	}
+	logrus.SetLevel(l)
 }
