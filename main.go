@@ -103,7 +103,12 @@ func main() {
 	if err := envconfig.Process("nsm", config); err != nil {
 		logrus.Fatalf("error processing config from env: %+v", err)
 	}
-	setLogLevel(config.LogLevel)
+
+	l, err := logrus.ParseLevel(config.LogLevel)
+	if err != nil {
+		logrus.Fatalf("invalid log level %s", config.LogLevel)
+	}
+	logrus.SetLevel(l)
 
 	log.FromContext(ctx).Infof("Config: %#v", config)
 
@@ -208,12 +213,4 @@ func getPublicURL(u *url.URL) *url.URL {
 		}
 	}
 	return u
-}
-
-func setLogLevel(level string) {
-	l, err := logrus.ParseLevel(level)
-	if err != nil {
-		logrus.Fatalf("invalid log level %s", level)
-	}
-	logrus.SetLevel(l)
 }
