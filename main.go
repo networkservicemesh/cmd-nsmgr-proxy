@@ -36,7 +36,6 @@ import (
 	registryconnect "github.com/networkservicemesh/sdk/pkg/registry/common/connect"
 
 	"github.com/networkservicemesh/sdk/pkg/networkservice/chains/nsmgrproxy"
-	"github.com/networkservicemesh/sdk/pkg/networkservice/common/connect"
 	"github.com/networkservicemesh/sdk/pkg/tools/jaeger"
 	"github.com/networkservicemesh/sdk/pkg/tools/spiffejwt"
 
@@ -157,7 +156,7 @@ func main() {
 		nsmgrproxy.WithName(config.Name),
 		nsmgrproxy.WithListenOn(listenURL),
 		nsmgrproxy.WithRegistryConnectOptions(registryconnect.WithDialOptions(dialOptions...)),
-		nsmgrproxy.WithConnectOptions(connect.WithDialOptions(dialOptions...)),
+		nsmgrproxy.WithDialOptions(dialOptions...),
 		nsmgrproxy.WithMapIPFilePath(config.MapIPFilePath),
 	).Register(server)
 
