@@ -62,6 +62,7 @@ type Config struct {
 	RegistryProxyURL *url.URL      `desc:"URL to registry proxy. All incoming interdomain registry requests will be proxying by the URL" split_words:"true"`
 	RegistryURL      *url.URL      `desc:"URL to registry. All incoming local registry requests will be proxying by the URL" split_words:"true"`
 	LogLevel         string        `default:"INFO" desc:"Log level" split_words:"true"`
+	DialTimeout      time.Duration `default:"1s" desc:"dial timeout for outgoing connections" split_words:"true"`
 }
 
 func main() {
@@ -157,6 +158,7 @@ func main() {
 		nsmgrproxy.WithListenOn(listenURL),
 		nsmgrproxy.WithRegistryConnectOptions(registryconnect.WithDialOptions(dialOptions...)),
 		nsmgrproxy.WithDialOptions(dialOptions...),
+		nsmgrproxy.WithDialTimeout(config.DialTimeout),
 		nsmgrproxy.WithMapIPFilePath(config.MapIPFilePath),
 	).Register(server)
 
