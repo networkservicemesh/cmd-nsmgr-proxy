@@ -100,18 +100,6 @@ func main() {
 		logrus.Fatalf("error processing config from env: %+v", err)
 	}
 
-	if opentelemetry.IsEnabled() {
-		collectorAddress := config.OpenTelemetryCollectorURL
-		spanExporter := opentelemetry.InitSpanExporter(ctx, collectorAddress)
-		metricExporter := opentelemetry.InitMetricExporter(ctx, collectorAddress)
-		o := opentelemetry.Init(ctx, spanExporter, metricExporter, "nsmgr-proxy")
-		defer func() {
-			if err := o.Close(); err != nil {
-				log.FromContext(ctx).Fatal(err)
-			}
-		}()
-	}
-
 	l, err := logrus.ParseLevel(config.LogLevel)
 	if err != nil {
 		logrus.Fatalf("invalid log level %s", config.LogLevel)
@@ -119,6 +107,19 @@ func main() {
 	logrus.SetLevel(l)
 
 	log.FromContext(ctx).Infof("Config: %#v", config)
+
+	// Configure Open Telemetry
+	if opentelemetry.IsEnabled() {
+		collectorAddress := config.OpenTelemetryCollectorURL
+		spanExporter := opentelemetry.InitSpanExporter(ctx, collectorAddress)
+		metricExporter := opentelemetry.InitMetricExporter(ctx, collectorAddress)
+		o := opentelemetry.Init(ctx, spanExporter, metricExporter, "nsmgr-proxy")
+		defer func() {
+			if err = o.Close(); err != nil {
+				log.FromContext(ctx).Fatal(err)
+			}
+		}()
+	}
 
 	// Get a X509Source
 	source, err := workloadapi.NewX509Source(ctx)
