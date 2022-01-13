@@ -56,14 +56,14 @@ import (
 
 // Config is configuration for cmd-nsmgr-proxy
 type Config struct {
-	ListenOn                  []url.URL     `default:"unix:///listen.on.socket" desc:"url to listen on." split_words:"true"`
-	Name                      string        `default:"nsmgr-proxy" desc:"Name of Network service manager proxy"`
-	MaxTokenLifetime          time.Duration `default:"10m" desc:"maximum lifetime of tokens" split_words:"true"`
-	MapIPFilePath             string        `default:"map-ip.yaml" desc:"Path to file that contains map of internal to external IPs" split_words:"true"`
-	RegistryProxyURL          *url.URL      `desc:"URL to registry proxy. All incoming interdomain registry requests will be proxying by the URL" split_words:"true"`
-	RegistryURL               *url.URL      `desc:"URL to registry. All incoming local registry requests will be proxying by the URL" split_words:"true"`
-	LogLevel                  string        `default:"INFO" desc:"Log level" split_words:"true"`
-	OpenTelemetryCollectorURL string        `default:"otel-collector.observability.svc.cluster.local:4317" desc:"OpenTelemetry Collector URL"`
+	ListenOn              []url.URL     `default:"unix:///listen.on.socket" desc:"url to listen on." split_words:"true"`
+	Name                  string        `default:"nsmgr-proxy" desc:"Name of Network service manager proxy"`
+	MaxTokenLifetime      time.Duration `default:"10m" desc:"maximum lifetime of tokens" split_words:"true"`
+	MapIPFilePath         string        `default:"map-ip.yaml" desc:"Path to file that contains map of internal to external IPs" split_words:"true"`
+	RegistryProxyURL      *url.URL      `desc:"URL to registry proxy. All incoming interdomain registry requests will be proxying by the URL" split_words:"true"`
+	RegistryURL           *url.URL      `desc:"URL to registry. All incoming local registry requests will be proxying by the URL" split_words:"true"`
+	LogLevel              string        `default:"INFO" desc:"Log level" split_words:"true"`
+	OpenTelemetryEndpoint string        `default:"otel-collector.observability.svc.cluster.local:4317" desc:"OpenTelemetry Collector Endpoint"`
 }
 
 func main() {
@@ -110,13 +110,13 @@ func main() {
 
 	// Configure Open Telemetry
 	if opentelemetry.IsEnabled() {
-		collectorAddress := config.OpenTelemetryCollectorURL
+		collectorAddress := config.OpenTelemetryEndpoint
 		spanExporter := opentelemetry.InitSpanExporter(ctx, collectorAddress)
 		metricExporter := opentelemetry.InitMetricExporter(ctx, collectorAddress)
-		o := opentelemetry.Init(ctx, spanExporter, metricExporter, "nsmgr-proxy")
+		o := opentelemetry.Init(ctx, spanExporter, metricExporter, config.Name)
 		defer func() {
 			if err = o.Close(); err != nil {
-				log.FromContext(ctx).Fatal(err)
+				log.FromContext(ctx).Error(err.Error())
 			}
 		}()
 	}
