@@ -35,8 +35,6 @@ import (
 	"github.com/networkservicemesh/sdk/pkg/tools/token"
 	"github.com/networkservicemesh/sdk/pkg/tools/tracing"
 
-	registryconnect "github.com/networkservicemesh/sdk/pkg/registry/common/connect"
-
 	"github.com/networkservicemesh/sdk/pkg/networkservice/chains/nsmgrproxy"
 	"github.com/networkservicemesh/sdk/pkg/tools/spiffejwt"
 
@@ -165,7 +163,6 @@ func main() {
 		spiffejwt.TokenGeneratorFunc(source, config.MaxTokenLifetime),
 		nsmgrproxy.WithName(config.Name),
 		nsmgrproxy.WithListenOn(listenURL),
-		nsmgrproxy.WithRegistryConnectOptions(registryconnect.WithDialOptions(dialOptions...)),
 		nsmgrproxy.WithDialOptions(dialOptions...),
 		nsmgrproxy.WithMapIPFilePath(config.MapIPFilePath),
 	).Register(server)

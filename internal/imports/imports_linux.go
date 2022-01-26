@@ -9,7 +9,6 @@ import (
 	_ "github.com/edwarnicke/grpcfd"
 	_ "github.com/kelseyhightower/envconfig"
 	_ "github.com/networkservicemesh/sdk/pkg/networkservice/chains/nsmgrproxy"
-	_ "github.com/networkservicemesh/sdk/pkg/registry/common/connect"
 	_ "github.com/networkservicemesh/sdk/pkg/tools/debug"
 	_ "github.com/networkservicemesh/sdk/pkg/tools/grpcutils"
 	_ "github.com/networkservicemesh/sdk/pkg/tools/log"
