@@ -32,7 +32,6 @@ import (
 
 	"github.com/edwarnicke/grpcfd"
 
-	"github.com/networkservicemesh/sdk/pkg/registry/common/authorize"
 	"github.com/networkservicemesh/sdk/pkg/tools/opentelemetry"
 	"github.com/networkservicemesh/sdk/pkg/tools/token"
 	"github.com/networkservicemesh/sdk/pkg/tools/tracing"
@@ -172,8 +171,6 @@ func main() {
 		nsmgrproxy.WithListenOn(listenURL),
 		nsmgrproxy.WithDialOptions(dialOptions...),
 		nsmgrproxy.WithMapIPFilePath(config.MapIPFilePath),
-		nsmgrproxy.WithAuthorizeNSERegistryServer(authorize.NewNetworkServiceEndpointRegistryServer()),
-		nsmgrproxy.WithAuthorizeNSRegistryServer(authorize.NewNetworkServiceRegistryServer()),
 	).Register(server)
 
 	for i := 0; i < len(config.ListenOn); i++ {
