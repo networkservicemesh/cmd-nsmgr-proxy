@@ -172,8 +172,8 @@ func main() {
 		nsmgrproxy.WithListenOn(listenURL),
 		nsmgrproxy.WithDialOptions(dialOptions...),
 		nsmgrproxy.WithMapIPFilePath(config.MapIPFilePath),
-		nsmgrproxy.WithAuthorizeNSERegistryServer(authorize.NewNetworkServiceEndpointRegistryServer()),
-		nsmgrproxy.WithAuthorizeNSRegistryServer(authorize.NewNetworkServiceRegistryServer()),
+		nsmgrproxy.WithAuthorizeNSERegistryServer(authorize.NewNetworkServiceEndpointRegistryServer(authorize.Any())),
+		nsmgrproxy.WithAuthorizeNSRegistryServer(authorize.NewNetworkServiceRegistryServer(authorize.Any())),
 	).Register(server)
 
 	for i := 0; i < len(config.ListenOn); i++ {
