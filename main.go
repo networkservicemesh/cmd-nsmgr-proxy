@@ -22,7 +22,6 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
 	"net"
 	"net/url"
 	"os"
@@ -50,6 +49,7 @@ import (
 
 	"github.com/networkservicemesh/sdk/pkg/tools/debug"
 	"github.com/networkservicemesh/sdk/pkg/tools/grpcutils"
+	"github.com/networkservicemesh/sdk/pkg/tools/listenonurl"
 	"github.com/networkservicemesh/sdk/pkg/tools/log"
 	"github.com/networkservicemesh/sdk/pkg/tools/log/logruslogger"
 )
@@ -159,7 +159,7 @@ func main() {
 		grpcfd.WithChainUnaryInterceptor(),
 	)
 
-	listenURL := getPublicURL(defaultURL(config))
+	listenURL := getPublishableURL(config.ListenOn, log.FromContext(ctx))
 
 	log.FromContext(ctx).Infof("Listening url: %v", listenURL)
 
@@ -200,32 +200,21 @@ func exitOnErr(ctx context.Context, cancel context.CancelFunc, errCh <-chan erro
 	}(ctx, errCh)
 }
 
-func defaultURL(c *Config) *url.URL {
-	for i := 0; i < len(c.ListenOn); i++ {
-		u := &c.ListenOn[i]
+func getPublishableURL(listenOn []url.URL, logger log.Logger) *url.URL {
+	u := defaultURL(listenOn)
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		logger.Warn(err.Error())
+		return u
+	}
+	return listenonurl.GetPublicURL(addrs, u)
+}
+func defaultURL(listenOn []url.URL) *url.URL {
+	for i := 0; i < len(listenOn); i++ {
+		u := &listenOn[i]
 		if u.Scheme == "tcp" {
 			return u
 		}
 	}
-	return &c.ListenOn[0]
-}
-
-func getPublicURL(u *url.URL) *url.URL {
-	if u.Port() == "" || len(u.Host) != len(":")+len(u.Port()) {
-		return u
-	}
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		logrus.Warn(err.Error())
-		return u
-	}
-	for _, a := range addrs {
-		if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				r, _ := url.Parse(fmt.Sprintf("tcp://%v:%v", ipnet.IP.String(), u.Port()))
-				return r
-			}
-		}
-	}
-	return u
+	return &listenOn[0]
 }
