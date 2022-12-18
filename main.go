@@ -56,14 +56,16 @@ import (
 
 // Config is configuration for cmd-nsmgr-proxy
 type Config struct {
-	ListenOn              []url.URL     `default:"unix:///listen.on.socket" desc:"url to listen on." split_words:"true"`
-	Name                  string        `default:"nsmgr-proxy" desc:"Name of Network service manager proxy"`
-	MaxTokenLifetime      time.Duration `default:"10m" desc:"maximum lifetime of tokens" split_words:"true"`
-	MapIPFilePath         string        `default:"map-ip.yaml" desc:"Path to file that contains map of internal to external IPs" split_words:"true"`
-	RegistryProxyURL      *url.URL      `desc:"URL to registry proxy. All incoming interdomain registry requests will be proxying by the URL" split_words:"true"`
-	RegistryURL           *url.URL      `desc:"URL to registry. All incoming local registry requests will be proxying by the URL" split_words:"true"`
-	LogLevel              string        `default:"INFO" desc:"Log level" split_words:"true"`
-	OpenTelemetryEndpoint string        `default:"otel-collector.observability.svc.cluster.local:4317" desc:"OpenTelemetry Collector Endpoint"`
+	ListenOn               []url.URL     `default:"unix:///listen.on.socket" desc:"url to listen on." split_words:"true"`
+	Name                   string        `default:"nsmgr-proxy" desc:"Name of Network service manager proxy"`
+	MaxTokenLifetime       time.Duration `default:"10m" desc:"maximum lifetime of tokens" split_words:"true"`
+	RegistryServerPolicies []string      `default:"etc/nsm/opa/common/.*.rego,etc/nsm/opa/registry/.*.rego,etc/nsm/opa/server/.*.rego" desc:"paths to files and directories that contain registry server policies" split_words:"true"`
+	RegistryClientPolicies []string      `default:"etc/nsm/opa/common/.*.rego,etc/nsm/opa/registry/.*.rego,etc/nsm/opa/client/.*.rego" desc:"paths to files and directories that contain registry client policies" split_words:"true"`
+	MapIPFilePath          string        `default:"map-ip.yaml" desc:"Path to file that contains map of internal to external IPs" split_words:"true"`
+	RegistryProxyURL       *url.URL      `desc:"URL to registry proxy. All incoming interdomain registry requests will be proxying by the URL" split_words:"true"`
+	RegistryURL            *url.URL      `desc:"URL to registry. All incoming local registry requests will be proxying by the URL" split_words:"true"`
+	LogLevel               string        `default:"INFO" desc:"Log level" split_words:"true"`
+	OpenTelemetryEndpoint  string        `default:"otel-collector.observability.svc.cluster.local:4317" desc:"OpenTelemetry Collector Endpoint"`
 }
 
 func main() {
@@ -150,9 +152,7 @@ func main() {
 		),
 		grpc.WithTransportCredentials(
 			grpcfd.TransportCredentials(
-				credentials.NewTLS(
-					tlsClientConfig,
-				),
+				credentials.NewTLS(tlsClientConfig),
 			),
 		),
 		grpcfd.WithChainStreamInterceptor(),
@@ -172,8 +172,14 @@ func main() {
 		nsmgrproxy.WithListenOn(listenURL),
 		nsmgrproxy.WithDialOptions(dialOptions...),
 		nsmgrproxy.WithMapIPFilePath(config.MapIPFilePath),
-		nsmgrproxy.WithAuthorizeNSERegistryServer(authorize.NewNetworkServiceEndpointRegistryServer(authorize.Any())),
-		nsmgrproxy.WithAuthorizeNSRegistryServer(authorize.NewNetworkServiceRegistryServer(authorize.Any())),
+		nsmgrproxy.WithAuthorizeNSERegistryServer(authorize.NewNetworkServiceEndpointRegistryServer(authorize.WithPolicies(
+			config.RegistryServerPolicies...))),
+		nsmgrproxy.WithAuthorizeNSERegistryClient(authorize.NewNetworkServiceEndpointRegistryClient(authorize.WithPolicies(
+			config.RegistryClientPolicies...))),
+		nsmgrproxy.WithAuthorizeNSRegistryServer(authorize.NewNetworkServiceRegistryServer(authorize.WithPolicies(
+			config.RegistryServerPolicies...))),
+		nsmgrproxy.WithAuthorizeNSRegistryClient(authorize.NewNetworkServiceRegistryClient(authorize.WithPolicies(
+			config.RegistryClientPolicies...))),
 	).Register(server)
 
 	for i := 0; i < len(config.ListenOn); i++ {
