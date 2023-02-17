@@ -19,7 +19,6 @@
 //go:build !windows
 // +build !windows
 
-// Package main comment
 package main
 
 import (
