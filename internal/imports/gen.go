@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package imports comment
+// Package imports is used for generating list of imports to optimize use of docker build cache
 package imports
 
 //go:generate bash -c "rm -rf imports_linux.go"
