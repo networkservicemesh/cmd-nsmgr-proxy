@@ -67,7 +67,7 @@ type Config struct {
 	RegistryProxyURL       *url.URL      `desc:"URL to registry proxy. All incoming interdomain registry requests will be proxying by the URL" split_words:"true"`
 	RegistryURL            *url.URL      `desc:"URL to registry. All incoming local registry requests will be proxying by the URL" split_words:"true"`
 	LogLevel               string        `default:"INFO" desc:"Log level" split_words:"true"`
-	OpenTelemetryEndpoint  string        `default:"otel-collector.observability.svc.cluster.local:4317" desc:"OpenTelemetry Collector Endpoint"`
+	OpenTelemetryEndpoint  string        `default:"otel-collector.observability.svc.cluster.local:4317" desc:"OpenTelemetry Collector Endpoint" split_words:"true"`
 	MetricsExportInterval  time.Duration `default:"10s" desc:"interval between mertics exports" split_words:"true"`
 }
 
