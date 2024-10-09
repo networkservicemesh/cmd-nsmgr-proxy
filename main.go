@@ -109,13 +109,7 @@ func main() {
 	if err := envconfig.Process("nsm", config); err != nil {
 		logrus.Fatalf("error processing config from env: %+v", err)
 	}
-
-	l, err := logrus.ParseLevel(config.LogLevel)
-	if err != nil {
-		logrus.Fatalf("invalid log level %s", config.LogLevel)
-	}
-	logrus.SetLevel(l)
-
+	setupLogLevel(ctx, config.LogLevel)
 	log.FromContext(ctx).Infof("Config: %#v", config)
 
 	// Configure Open Telemetry
@@ -125,7 +119,7 @@ func main() {
 		metricExporter := opentelemetry.InitOPTLMetricExporter(ctx, collectorAddress, config.MetricsExportInterval)
 		o := opentelemetry.Init(ctx, spanExporter, metricExporter, config.Name)
 		defer func() {
-			if err = o.Close(); err != nil {
+			if err := o.Close(); err != nil {
 				log.FromContext(ctx).Error(err.Error())
 			}
 		}()
@@ -236,4 +230,16 @@ func defaultURL(listenOn []url.URL) *url.URL {
 		}
 	}
 	return &listenOn[0]
+}
+
+func setupLogLevel(ctx context.Context, logLevel string) {
+	l, err := logrus.ParseLevel(logLevel)
+	if err != nil {
+		logrus.Fatalf("invalid log level %s", logLevel)
+	}
+	logrus.SetLevel(l)
+	logruslogger.SetupLevelChangeOnSignal(ctx, map[os.Signal]logrus.Level{
+		syscall.SIGUSR1: logrus.TraceLevel,
+		syscall.SIGUSR2: l,
+	})
 }
