@@ -7,7 +7,7 @@ require (
 	github.com/edwarnicke/exechelper v1.0.3
 	github.com/edwarnicke/grpcfd v1.1.4
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/networkservicemesh/sdk v0.5.1-0.20260824084712-ee8eec42a3ce
+	github.com/networkservicemesh/sdk v0.5.1-0.20260831132601-c0925ce21a09
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spiffe/go-spiffe/v2 v2.6.0
 	github.com/stretchr/testify v1.11.1
